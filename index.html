@@ -1,77 +1,267 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light"> <!-- Default to light; JS will set based on storage -->
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Index Creator</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <title>Music Gallery - Raj</title>
+
+    <!-- Bootstrap 5 + Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; }
+        .thumb-img {
+            width: 80px; height: 80px; object-fit: cover;
+            border-radius: 8px; cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,.3);
+            transition: transform .2s;
+        }
+        .thumb-img:hover { transform: scale(1.12); }
+        .modal-img { max-height: 82vh; max-width: 90vw; border-radius: 10px; }
+        .page-no { font-weight: 600; color: #4dabf7; }
+        .table th { background-color: #1e40af; color: white; }
+        .search-box { max-width: 400px; }
+        .no-results {
+            text-align: center; padding: 2rem; color: #9ca3af;
+            font-style: italic;
+        }
+        .theme-toggle {
+            position: fixed; top: 20px; right: 20px; z-index: 1050;
+            background: rgba(0,0,0,.5); border: none; color: white;
+            padding: 10px; border-radius: 50%; width: 50px; height: 50px;
+            display: flex; align-items: center; justify-content: center;
+            transition: background .3s;
+        }
+        .theme-toggle:hover { background: rgba(0,0,0,.7); }
+    </style>
 </head>
-<body class="bg-light">
-    <div class="container mt-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="mb-0">SLNO Description and Page Number Index</h1>
-            <button id="themeToggle" class="btn btn-outline-secondary">🌙 Dark Mode</button>
-        </div>
-        <form id="indexForm" class="row g-3 mb-4">
-            <div class="col-md-5">
-                <input type="text" id="description" class="form-control" placeholder="Description" required>
-            </div>
-            <div class="col-md-4">
-                <input type="text" id="pageNumber" class="form-control" placeholder="Page Number" required>
-            </div>
-            <div class="col-md-3">
-                <button type="submit" class="btn btn-success w-100">Add Entry</button>
-            </div>
-        </form>
-        <div class="table-responsive">
-            <table class="table table-striped table-hover" id="indexTable">
-                <thead class="table-dark">
-                    <tr>
-                        <th>SLNO</th>
-                        <th>Description</th>
-                        <th>Page Number</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="indexBody">
-                    <!-- Entries will be added here -->
-                </tbody>
-            </table>
-        </div>
-    </div>
+<body class="bg-dark text-light">
 
-    <!-- Edit Modal -->
-    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editModalLabel">Edit Entry</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editForm">
-                        <div class="mb-3">
-                            <label for="editDescription" class="form-label">Description</label>
-                            <input type="text" id="editDescription" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editPageNumber" class="form-label">Page Number</label>
-                            <input type="number" id="editPageNumber" class="form-control" required>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="saveEditBtn">Save Changes</button>
-                </div>
+<!-- Theme Toggle Button -->
+<button class="theme-toggle" id="themeToggle" title="Toggle Light/Dark">
+    <i class="bi bi-sun-fill" id="themeIcon"></i>
+</button>
+
+<div class="container py-5">
+    <h1 class="text-center mb-4 fw-bold text-primary">Music Gallery - Raj</h1>
+
+    <!-- Search Box -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-6">
+            <div class="input-group search-box">
+                <span class="input-group-text bg-secondary text-light border-0"><i class="bi bi-search"></i></span>
+                <input type="text" id="searchInput" class="form-control bg-secondary text-light border-0" 
+                       placeholder="Search by song or date..." autocomplete="off">
+                <button class="btn btn-outline-light" type="button" id="clearSearch">
+                    <i class="bi bi-x-lg"></i>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="script.js"></script>
+    <!-- Table -->
+    <div class="table-responsive mb-4">
+        <table class="table table-hover align-middle shadow-sm">
+            <thead class="table-primary">
+                <tr>
+                    <th>SL No</th>
+                    <th>Description</th>
+                    <th>Image</th>
+                    <th class="page-no">Page No</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody" class="table-dark"></tbody>
+        </table>
+    </div>
+
+    <!-- No Results -->
+    <div id="noResults" class="no-results" style="display: none;">
+        <i class="bi bi-emoji-frown display-4"></i><br>
+        No songs found matching your search.
+    </div>
+
+    <!-- Pagination -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center" id="pagination"></ul>
+    </nav>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content bg-dark border-0">
+            <div class="modal-header border-0 justify-content-end">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <img id="modalImage" src="" alt="Full Image" class="modal-img img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // ================== DATA ==================
+    const galleryData = [
+        {sl: 1, desc: "Aha Ki Anondo", thumb: "images/aha.jpg", full: "images/aha.jpg", page: "26th March"},
+        {sl: 2, desc: "Aj Gungun Gunje", thumb: "images/Aj Gungun Gunje.jpg", full: "images/Aj Gungun Gunje.jpg", page: "20th April"},
+        {sl: 3, desc: "Alada Alada Sob", thumb: "images/Alada Alada Sob.jpg", full: "images/Alada Alada Sob.jpg", page: "21st April"},
+        {sl: 4, desc: "Amar Bhitor O Bahire", thumb: "images/Amar Bhitor O Bahire.jpg", full: "images/Amar Bhitor O Bahire.jpg", page: "16th April"},
+        {sl: 5, desc: "Amar Swapno Tumi", thumb: "images/Amar Swapno Tumi.jpg", full: "images/Amar Swapno Tumi.jpg", page: "19th May"},
+        {sl: 6, desc: "Anondo Loke", thumb: "images/Anondo Loke.jpg", full: "images/Anondo Loke.jpg", page: "26th March"},
+        {sl: 7, desc: "Bangla Amar", thumb: "images/Bangla Amar.jpg", full: "images/Bangla Amar.jpg", page: "20th May"},
+        {sl: 8, desc: "Behaya", thumb: "images/Behaya.jpg", full: "images/Behaya.jpg", page: "29th May"},
+        {sl: 9, desc: "Boshonto Bohilo Sokhi", thumb: "images/Boshonto Bohilo Sokhi.jpg", full: "images/Boshonto Bohilo Sokhi.jpg", page: "5th May"},
+        {sl: 10, desc: "Churalia hai", thumb: "images/Churalia hai.jpg", full: "images/Churalia hai.jpg", page: "26th May"},
+        {sl: 11, desc: "Dekhechi Rupsagore", thumb: "images/Dekhechi Rupsagore.jpg", full: "images/Dekhechi Rupsagore.jpg", page: "13th May"},
+        {sl: 12, desc: "Ei Mon Jochonai", thumb: "images/Ei Mon Jochonai.jpg", full: "images/Ei Mon Jochonai.jpg", page: "11th April"},
+        {sl: 13, desc: "EI Sundor Sornali Sondhai", thumb: "images/EI Sundor Sornali Sondhai.jpg", full: "images/EI Sundor Sornali Sondhai.jpg", page: "27th March"},
+        {sl: 14, desc: "Ei toh Hethai X Borne Gondhe", thumb: "images/Ei toh Hethai X Borne Gondhe.jpg", full: "images/Ei toh Hethai X Borne Gondhe.jpg", page: "13th April"},
+        {sl: 15, desc: "Eita Tomar Gaan", thumb: "images/Eita Tomar Gaan.jpg", full: "images/Eita Tomar Gaan.jpg", page: "28th April"},
+        {sl: 16, desc: "Hoito Tomar Jonno", thumb: "images/Hoito Tomar Jonno.jpg", full: "images/Hoito Tomar Jonno.jpg", page: "11th May"},
+        {sl: 17, desc: "Kalo Jole Kuchlatole", thumb: "images/Kalo Jole Kuchlatole.jpg", full: "images/Kalo Jole Kuchlatole.jpg", page: "14th May"},
+        {sl: 18, desc: "Kobitar Gaan", thumb: "images/Kobitar Gaan.jpg", full: "images/Kobitar Gaan.jpg", page: "23rd April"},
+        {sl: 19, desc: "Konse Alor Swapno", thumb: "images/Konse Alor Swapno.jpg", full: "images/Konse Alor Swapno.jpg", page: "18th April"},
+        {sl: 20, desc: "Monta Re", thumb: "images/Monta Re.jpg", full: "images/Monta Re.jpg", page: "29th April"},
+        {sl: 21, desc: "Na Bole Esechi", thumb: "images/Na Bole Esechi.jpg", full: "images/Na Bole Esechi.jpg", page: "10th April"},
+        {sl: 22, desc: "Nithur Monoloi", thumb: "images/Nithur Monoloi.jpg", full: "images/Nithur Monoloi.jpg", page: "8th May"},
+        {sl: 23, desc: "Olir Kotha Sune", thumb: "images/Olir Kotha Sune.jpg", full: "images/Olir Kotha Sune.jpg", page: "2nd May"},
+        {sl: 24, desc: "Raastar Sathe Tramline", thumb: "images/Raastar Sathe Tramline.jpg", full: "images/Raastar Sathe Tramline.jpg", page: "12th May"},
+        {sl: 25, desc: "Rangeela Bashite X Sawar Loo", thumb: "images/Rangeela Bashite X Sawar Loo.jpg", full: "images/Rangeela Bashite X Sawar Loo.jpg", page: "30th April"},
+        {sl: 26, desc: "Sei Raate Raat Chilo", thumb: "images/Sei Raate Raat Chilo.jpg", full: "images/Sei Raate Raat Chilo.jpg", page: "9th May"},
+        {sl: 27, desc: "Tapa Tini", thumb: "images/Tapa Tini.jpg", full: "images/Tapa Tini.jpg", page: "15th April"},
+        {sl: 28, desc: "Thakur Jamai", thumb: "images/Thakur Jamai.jpg", full: "images/Thakur Jamai.jpg", page: "18th May"},
+        {sl: 29, desc: "Tokhn Tomar 21 Bochor", thumb: "images/Tokhn Tomar 21 Bochor.jpg", full: "images/Tokhn Tomar 21 Bochor.jpg", page: "15th May"},
+        {sl: 30, desc: "Tuhi Haqeeqat", thumb: "images/Tuhi Haqeeqat.jpg", full: "images/Tuhi Haqeeqat.jpg", page: "11th January"},
+        {sl: 31, desc: "Tumi jake Bhalobasho X Moina Go", thumb: "images/TumijakeBhalobasho X Moina Go.jpg", full: "images/TumijakeBhalobasho X Moina Go.jpg", page: "14th April"},
+    ];
+
+    const ROWS_PER_PAGE = 100;
+    let currentPage = 1;
+    let filteredData = [...galleryData];
+
+    // ================== RENDER TABLE ==================
+    function renderTable(page) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        const start = (page - 1) * ROWS_PER_PAGE;
+        const end = start + ROWS_PER_PAGE;
+        const items = filteredData.slice(start, end);
+
+        if (items.length === 0) {
+            document.getElementById('noResults').style.display = 'block';
+            document.querySelector('.table-responsive').style.display = 'none';
+            document.getElementById('pagination').parentElement.style.display = 'none';
+            return;
+        }
+
+        document.getElementById('noResults').style.display = 'none';
+        document.querySelector('.table-responsive').style.display = 'block';
+        document.getElementById('pagination').parentElement.style.display = 'block';
+
+        items.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${item.sl}</strong></td>
+                <td><strong>${item.desc}</strong></td>
+                <td>
+                    <img src="${item.thumb}" alt="${item.desc}"
+                         class="thumb-img"
+                         data-bs-toggle="modal" data-bs-target="#imageModal"
+                         data-full="${item.full}">
+                </td>
+                <td class="page-no">${item.page}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ================== PAGINATION ==================
+    function renderPagination() {
+        const total = Math.ceil(filteredData.length / ROWS_PER_PAGE);
+        const ul = document.getElementById('pagination');
+        ul.innerHTML = '';
+
+        if (total <= 1) {
+            ul.parentElement.style.display = 'none';
+            return;
+        }
+        ul.parentElement.style.display = 'block';
+
+        const prev = document.createElement('li');
+        prev.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prev.innerHTML = `<a class="page-link" href="#">Previous</a>`;
+        prev.onclick = e => { e.preventDefault(); if (currentPage > 1) changePage(currentPage - 1); };
+        ul.appendChild(prev);
+
+        for (let i = 1; i <= total; i++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+            li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+            li.onclick = e => { e.preventDefault(); changePage(i); };
+            ul.appendChild(li);
+        }
+
+        const next = document.createElement('li');
+        next.className = `page-item ${currentPage === total ? 'disabled' : ''}`;
+        next.innerHTML = `<a class="page-link" href="#">Next</a>`;
+        next.onclick = e => { e.preventDefault(); if (currentPage < total) changePage(currentPage + 1); };
+        ul.appendChild(next);
+    }
+
+    function changePage(page) {
+        currentPage = page;
+        renderTable(currentPage);
+        renderPagination();
+    }
+
+    // ================== SEARCH ==================
+    const searchInput = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('clearSearch');
+
+    function performSearch() {
+        const query = searchInput.value.trim().toLowerCase();
+        filteredData = query === '' ? [...galleryData] : galleryData.filter(item =>
+            item.desc.toLowerCase().includes(query) || item.page.toLowerCase().includes(query)
+        );
+        currentPage = 1;
+        renderTable(currentPage);
+        renderPagination();
+    }
+
+    searchInput.addEventListener('input', performSearch);
+    clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        performSearch();
+    });
+
+    // ================== THEME TOGGLE ==================
+    const html = document.documentElement;
+    const toggleBtn = document.getElementById('themeToggle');
+    const icon = document.getElementById('themeIcon');
+
+    toggleBtn.addEventListener('click', () => {
+        const isDark = html.getAttribute('data-bs-theme') === 'dark';
+        html.setAttribute('data-bs-theme', isDark ? 'light' : 'dark');
+        icon.className = isDark ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+        document.body.classList.toggle('bg-dark', !isDark);
+        document.body.classList.toggle('text-light', !isDark);
+    });
+
+    // ================== MODAL ==================
+    const modal = document.getElementById('imageModal');
+    modal.addEventListener('show.bs.modal', e => {
+        const img = e.relatedTarget;
+        document.getElementById('modalImage').src = img.getAttribute('data-full');
+    });
+
+    // ================== INIT ==================
+    performSearch();
+</script>
+
 </body>
 </html>
